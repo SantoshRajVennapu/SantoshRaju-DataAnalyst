@@ -1,0 +1,1241 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyMet+St3dauylVYlF3of87i",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/SantoshRajVennapu/SantoshRaju-DataAnalyst/blob/main/NewYork_KMeans_Clustering.ipynb_UPdated\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import seaborn as sns\n",
+        "import matplotlib.pyplot as plt\n"
+      ],
+      "metadata": {
+        "id": "4uLYFTPCauKD"
+      },
+      "execution_count": 1,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## **Feature Selection and Imputation**"
+      ],
+      "metadata": {
+        "id": "hgcsa-Oy7IKN"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "features1 = pd.read_excel('K-means Clustering_Copy.xlsx')\n",
+        "features1 = features1[['ALC','Flat_and_Under120days','UW_Cancel','Freq_Ratio_of_Policies','Avg_$_Increase_in_CovA',\n",
+        "       'Max_Term','Avg_profitability','Recent_production1','Recent_prod_values']]\n",
+        "\n",
+        "features = features1[['ALC','Flat_and_Under120days','UW_Cancel','Freq_Ratio_of_Policies','Avg_$_Increase_in_CovA',\n",
+        "       'Max_Term','Avg_profitability','Recent_production1','Recent_prod_values']]\n",
+        "\n",
+        "##features1.to_excel('features1.xlsx', index=False)\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "gO6SqXQ9l3Gv"
+      },
+      "execution_count": 2,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Feature Imputation**"
+      ],
+      "metadata": {
+        "id": "mmh7_dSNRBoV"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "features[['Avg_profitability', 'Recent_production1','Recent_prod_values']] = features[['Avg_profitability', 'Recent_production1','Recent_prod_values']].fillna(0)\n",
+        "\n",
+        "from scipy.stats import rankdata\n",
+        "features['Recent_production'] = (rankdata(features['Recent_prod_values'], method='max') - 1) / (len(features['Recent_prod_values']) - 1)\n",
+        "\n",
+        "\n",
+        "##agencies =features[['Flat_and_Under120days','UW_Cancel','Freq_Ratio_of_Policies','Avg_$_Increase_in_CovA',\n",
+        "      ## 'Max_Term','Avg_profitability','Recent_production']]\n",
+        "features.to_excel('features3.xlsx', index=False)"
+      ],
+      "metadata": {
+        "id": "1xNTO3xRRGt5"
+      },
+      "execution_count": 3,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "features.head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 226
+        },
+        "id": "UZEwH59wQzuQ",
+        "outputId": "664830fd-8f61-455d-ec40-4ffe62141448"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "         ALC  Flat_and_Under120days  UW_Cancel  Freq_Ratio_of_Policies  \\\n",
+              "0    E20000G               0.195616   0.066371                0.128578   \n",
+              "1    E27024N               0.090909   0.000000                0.090909   \n",
+              "2    E90408G               0.223449   0.071793                0.234070   \n",
+              "3    E20102N               0.178620   0.113667                0.188092   \n",
+              "4  W747193TF               1.000000   0.000000                0.000000   \n",
+              "\n",
+              "   Avg_$_Increase_in_CovA  Max_Term  Avg_profitability  Recent_production1  \\\n",
+              "0           102729.166667  0.688134        1192.303676               1.000   \n",
+              "1            47000.000000  0.275714        2445.500000               0.000   \n",
+              "2           138827.586207  0.655613        1141.157199               0.998   \n",
+              "3           134985.611511  0.666222         812.083333               0.838   \n",
+              "4                0.000000  0.050000           0.000000               0.000   \n",
+              "\n",
+              "   Recent_prod_values  Recent_production  \n",
+              "0              7451.0           1.000000  \n",
+              "1                 0.0           0.316797  \n",
+              "2               953.0           0.999130  \n",
+              "3                45.0           0.868581  \n",
+              "4                 0.0           0.316797  "
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-c17d0d3b-7be5-4fde-b81a-b69b1de3c00a\" class=\"colab-df-container\">\n",
+              "    <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>ALC</th>\n",
+              "      <th>Flat_and_Under120days</th>\n",
+              "      <th>UW_Cancel</th>\n",
+              "      <th>Freq_Ratio_of_Policies</th>\n",
+              "      <th>Avg_$_Increase_in_CovA</th>\n",
+              "      <th>Max_Term</th>\n",
+              "      <th>Avg_profitability</th>\n",
+              "      <th>Recent_production1</th>\n",
+              "      <th>Recent_prod_values</th>\n",
+              "      <th>Recent_production</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>E20000G</td>\n",
+              "      <td>0.195616</td>\n",
+              "      <td>0.066371</td>\n",
+              "      <td>0.128578</td>\n",
+              "      <td>102729.166667</td>\n",
+              "      <td>0.688134</td>\n",
+              "      <td>1192.303676</td>\n",
+              "      <td>1.000</td>\n",
+              "      <td>7451.0</td>\n",
+              "      <td>1.000000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>E27024N</td>\n",
+              "      <td>0.090909</td>\n",
+              "      <td>0.000000</td>\n",
+              "      <td>0.090909</td>\n",
+              "      <td>47000.000000</td>\n",
+              "      <td>0.275714</td>\n",
+              "      <td>2445.500000</td>\n",
+              "      <td>0.000</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>0.316797</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>E90408G</td>\n",
+              "      <td>0.223449</td>\n",
+              "      <td>0.071793</td>\n",
+              "      <td>0.234070</td>\n",
+              "      <td>138827.586207</td>\n",
+              "      <td>0.655613</td>\n",
+              "      <td>1141.157199</td>\n",
+              "      <td>0.998</td>\n",
+              "      <td>953.0</td>\n",
+              "      <td>0.999130</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>E20102N</td>\n",
+              "      <td>0.178620</td>\n",
+              "      <td>0.113667</td>\n",
+              "      <td>0.188092</td>\n",
+              "      <td>134985.611511</td>\n",
+              "      <td>0.666222</td>\n",
+              "      <td>812.083333</td>\n",
+              "      <td>0.838</td>\n",
+              "      <td>45.0</td>\n",
+              "      <td>0.868581</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>W747193TF</td>\n",
+              "      <td>1.000000</td>\n",
+              "      <td>0.000000</td>\n",
+              "      <td>0.000000</td>\n",
+              "      <td>0.000000</td>\n",
+              "      <td>0.050000</td>\n",
+              "      <td>0.000000</td>\n",
+              "      <td>0.000</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>0.316797</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "    <div class=\"colab-df-buttons\">\n",
+              "\n",
+              "  <div class=\"colab-df-container\">\n",
+              "    <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-c17d0d3b-7be5-4fde-b81a-b69b1de3c00a')\"\n",
+              "            title=\"Convert this dataframe to an interactive table.\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\">\n",
+              "    <path d=\"M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z\"/>\n",
+              "  </svg>\n",
+              "    </button>\n",
+              "\n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-buttons div {\n",
+              "      margin-bottom: 4px;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "    <script>\n",
+              "      const buttonEl =\n",
+              "        document.querySelector('#df-c17d0d3b-7be5-4fde-b81a-b69b1de3c00a button.colab-df-convert');\n",
+              "      buttonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "      async function convertToInteractive(key) {\n",
+              "        const element = document.querySelector('#df-c17d0d3b-7be5-4fde-b81a-b69b1de3c00a');\n",
+              "        const dataTable =\n",
+              "          await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                    [key], {});\n",
+              "        if (!dataTable) return;\n",
+              "\n",
+              "        const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "          '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "          + ' to learn more about interactive tables.';\n",
+              "        element.innerHTML = '';\n",
+              "        dataTable['output_type'] = 'display_data';\n",
+              "        await google.colab.output.renderOutput(dataTable, element);\n",
+              "        const docLink = document.createElement('div');\n",
+              "        docLink.innerHTML = docLinkHtml;\n",
+              "        element.appendChild(docLink);\n",
+              "      }\n",
+              "    </script>\n",
+              "  </div>\n",
+              "\n",
+              "\n",
+              "<div id=\"df-07557833-8315-4e4d-99ed-3918a8f8d7b0\">\n",
+              "  <button class=\"colab-df-quickchart\" onclick=\"quickchart('df-07557833-8315-4e4d-99ed-3918a8f8d7b0')\"\n",
+              "            title=\"Suggest charts\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "     width=\"24px\">\n",
+              "    <g>\n",
+              "        <path d=\"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z\"/>\n",
+              "    </g>\n",
+              "</svg>\n",
+              "  </button>\n",
+              "\n",
+              "<style>\n",
+              "  .colab-df-quickchart {\n",
+              "      --bg-color: #E8F0FE;\n",
+              "      --fill-color: #1967D2;\n",
+              "      --hover-bg-color: #E2EBFA;\n",
+              "      --hover-fill-color: #174EA6;\n",
+              "      --disabled-fill-color: #AAA;\n",
+              "      --disabled-bg-color: #DDD;\n",
+              "  }\n",
+              "\n",
+              "  [theme=dark] .colab-df-quickchart {\n",
+              "      --bg-color: #3B4455;\n",
+              "      --fill-color: #D2E3FC;\n",
+              "      --hover-bg-color: #434B5C;\n",
+              "      --hover-fill-color: #FFFFFF;\n",
+              "      --disabled-bg-color: #3B4455;\n",
+              "      --disabled-fill-color: #666;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart {\n",
+              "    background-color: var(--bg-color);\n",
+              "    border: none;\n",
+              "    border-radius: 50%;\n",
+              "    cursor: pointer;\n",
+              "    display: none;\n",
+              "    fill: var(--fill-color);\n",
+              "    height: 32px;\n",
+              "    padding: 0;\n",
+              "    width: 32px;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart:hover {\n",
+              "    background-color: var(--hover-bg-color);\n",
+              "    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "    fill: var(--button-hover-fill-color);\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart-complete:disabled,\n",
+              "  .colab-df-quickchart-complete:disabled:hover {\n",
+              "    background-color: var(--disabled-bg-color);\n",
+              "    fill: var(--disabled-fill-color);\n",
+              "    box-shadow: none;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-spinner {\n",
+              "    border: 2px solid var(--fill-color);\n",
+              "    border-color: transparent;\n",
+              "    border-bottom-color: var(--fill-color);\n",
+              "    animation:\n",
+              "      spin 1s steps(1) infinite;\n",
+              "  }\n",
+              "\n",
+              "  @keyframes spin {\n",
+              "    0% {\n",
+              "      border-color: transparent;\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "      border-left-color: var(--fill-color);\n",
+              "    }\n",
+              "    20% {\n",
+              "      border-color: transparent;\n",
+              "      border-left-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "    }\n",
+              "    30% {\n",
+              "      border-color: transparent;\n",
+              "      border-left-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "      border-right-color: var(--fill-color);\n",
+              "    }\n",
+              "    40% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "    }\n",
+              "    60% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "    }\n",
+              "    80% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "    }\n",
+              "    90% {\n",
+              "      border-color: transparent;\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "    }\n",
+              "  }\n",
+              "</style>\n",
+              "\n",
+              "  <script>\n",
+              "    async function quickchart(key) {\n",
+              "      const quickchartButtonEl =\n",
+              "        document.querySelector('#' + key + ' button');\n",
+              "      quickchartButtonEl.disabled = true;  // To prevent multiple clicks.\n",
+              "      quickchartButtonEl.classList.add('colab-df-spinner');\n",
+              "      try {\n",
+              "        const charts = await google.colab.kernel.invokeFunction(\n",
+              "            'suggestCharts', [key], {});\n",
+              "      } catch (error) {\n",
+              "        console.error('Error during call to suggestCharts:', error);\n",
+              "      }\n",
+              "      quickchartButtonEl.classList.remove('colab-df-spinner');\n",
+              "      quickchartButtonEl.classList.add('colab-df-quickchart-complete');\n",
+              "    }\n",
+              "    (() => {\n",
+              "      let quickchartButtonEl =\n",
+              "        document.querySelector('#df-07557833-8315-4e4d-99ed-3918a8f8d7b0 button');\n",
+              "      quickchartButtonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "    })();\n",
+              "  </script>\n",
+              "</div>\n",
+              "\n",
+              "    </div>\n",
+              "  </div>\n"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "dataframe",
+              "variable_name": "features",
+              "summary": "{\n  \"name\": \"features\",\n  \"rows\": 1150,\n  \"fields\": [\n    {\n      \"column\": \"ALC\",\n      \"properties\": {\n        \"dtype\": \"string\",\n        \"num_unique_values\": 1150,\n        \"samples\": [\n          \"E65325A\",\n          \"E27231N\",\n          \"E20011N\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Flat_and_Under120days\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 0.21042947183365213,\n        \"min\": 0.0,\n        \"max\": 1.0,\n        \"num_unique_values\": 403,\n        \"samples\": [\n          0.2631578947368421,\n          0.13636363636363635,\n          0.4117647058823529\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"UW_Cancel\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 0.1626833786709471,\n        \"min\": 0.0,\n        \"max\": 1.0,\n        \"num_unique_values\": 368,\n        \"samples\": [\n          0.07462686567164178,\n          0.09900990099009901,\n          0.03333333333333333\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Freq_Ratio_of_Policies\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 0.16149316241249062,\n        \"min\": 0.0,\n        \"max\": 1.0,\n        \"num_unique_values\": 393,\n        \"samples\": [\n          0.175,\n          0.14814814814814814,\n          0.3684210526315789\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Avg_$_Increase_in_CovA\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 96172.27505023651,\n        \"min\": 0.0,\n        \"max\": 817000.0,\n        \"num_unique_values\": 748,\n        \"samples\": [\n          247333.33333333334,\n          90666.66666666667,\n          88666.66666666667\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Max_Term\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 0.23924650654396581,\n        \"min\": 0.0,\n        \"max\": 0.9882352941176471,\n        \"num_unique_values\": 598,\n        \"samples\": [\n          0.7231474759141618,\n          0.6763492063492063,\n          0.08372093023255814\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Avg_profitability\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 839.6940950050192,\n        \"min\": -12037.0,\n        \"max\": 6851.0,\n        \"num_unique_values\": 1037,\n        \"samples\": [\n          1080.06976744186,\n          1973.0,\n          916.8\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Recent_production1\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 0.33839169136871095,\n        \"min\": 0.0,\n        \"max\": 1.0,\n        \"num_unique_values\": 141,\n        \"samples\": [\n          0.992,\n          0.947,\n          0.337\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Recent_prod_values\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 226.38417447481265,\n        \"min\": 0.0,\n        \"max\": 7451.0,\n        \"num_unique_values\": 141,\n        \"samples\": [\n          339.0,\n          134.0,\n          3.0\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"Recent_production\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 0.2252048104865526,\n        \"min\": 0.3167972149695387,\n        \"max\": 1.0,\n        \"num_unique_values\": 141,\n        \"samples\": [\n          0.9939077458659704,\n          0.9564838990426457,\n          0.47780678851174935\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    }\n  ]\n}"
+            }
+          },
+          "metadata": {},
+          "execution_count": 4
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "##output_path = 'KMeans_source_filledwith_correct_format.xlsx'\n",
+        "\n",
+        "\n",
+        "####agencies.to_excel(output_path, index=False, float_format=\"%.6f\")\n",
+        "\n",
+        "##print(f\"File exported successfully as '{output_path}'\")\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "flWzsk_R_kuI"
+      },
+      "execution_count": 5,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data = agencies.copy()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 146
+        },
+        "id": "sO8YoKTg8q6a",
+        "outputId": "f656e63c-89ad-43d5-c388-b7355f446ba1"
+      },
+      "execution_count": 6,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "name 'agencies' is not defined",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-6-578fece6d599>\u001b[0m in \u001b[0;36m<cell line: 1>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0mdata\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0magencies\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcopy\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m: name 'agencies' is not defined"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pd.options.display.float_format = '{:.5f}'.format"
+      ],
+      "metadata": {
+        "id": "-QyAyu4njdcO"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### **Scaling Avg_profititability and Avg_CovA using Minmax Scaler**"
+      ],
+      "metadata": {
+        "id": "CQ8wi7dAwky1"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "columns_to_scale = ['Avg_$_Increase_in_CovA', 'Avg_profitability']\n",
+        "data[columns_to_scale] = (data[columns_to_scale] - data[columns_to_scale].min()) / (data[columns_to_scale].max() - data[columns_to_scale].min())\n",
+        "\n",
+        "data.describe()"
+      ],
+      "metadata": {
+        "id": "qDVCcbS_mZ5m"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## **Replacing 0 values with 1e-9**"
+      ],
+      "metadata": {
+        "id": "Gr8t1AQph1eG"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "##data = data.replace(0, 1e-9)\n"
+      ],
+      "metadata": {
+        "id": "CR4POOTZtrOb"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data.head()"
+      ],
+      "metadata": {
+        "id": "Zhe8JgJp2JNE"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def random_centroids(data, k):\n",
+        "    centroids = []\n",
+        "    for i in range(k):\n",
+        "        centroid = data.apply(lambda x:float(x.sample()))\n",
+        "        centroids.append(centroid)\n",
+        "    return pd.concat(centroids, axis=1)\n"
+      ],
+      "metadata": {
+        "id": "7fspCSGYLjx0"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## **Assigning Random Centroids**"
+      ],
+      "metadata": {
+        "id": "t2_XDcMduFI2"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "centroids = random_centroids(data, 3)\n",
+        "centroids"
+      ],
+      "metadata": {
+        "id": "WQXMocgYOPfC"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data.head()"
+      ],
+      "metadata": {
+        "id": "KV8xSwQB-DP8"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### **Calculating Eucleadian Distance**"
+      ],
+      "metadata": {
+        "id": "oAFKhfqruO3i"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def get_labels(data,centroids):\n",
+        "    distances  = centroids.apply(lambda x: np.sqrt(((data - x) ** 2).sum(axis=1)))\n",
+        "    return distances.idxmin(axis=1)\n",
+        ""
+      ],
+      "metadata": {
+        "id": "0bMioK9UO_JA"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "labels = get_labels(data,centroids)"
+      ],
+      "metadata": {
+        "id": "cKbVXbQn7Cow"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## **Baseline clusters Count**"
+      ],
+      "metadata": {
+        "id": "56o-awUtw9D9"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "labels.value_counts()"
+      ],
+      "metadata": {
+        "id": "2lbORZNW7FLH"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [],
+      "metadata": {
+        "id": "_05Ey8C0w8Bn"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### **Updating the centroids based on Arthimetic Mean**\n"
+      ],
+      "metadata": {
+        "id": "GcPEu6apt21L"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data.groupby(labels).mean().T\n"
+      ],
+      "metadata": {
+        "id": "2o6-OugiZNcc"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def new_centroids(data, labels, k):\n",
+        "    centroids = data.groupby(labels).mean().T\n",
+        "    return centroids"
+      ],
+      "metadata": {
+        "id": "yQjmU5eZaYZl"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## **Plotting in PCA**"
+      ],
+      "metadata": {
+        "id": "NX0kI7uPLAGw"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.decomposition import PCA\n",
+        "import matplotlib.pyplot as plt\n",
+        "from IPython.display import clear_output"
+      ],
+      "metadata": {
+        "id": "3XUd7qYquxLp"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def plot_clusters(data, labels, centroids, iteration):\n",
+        "    pca = PCA(n_components=2)\n",
+        "    data_2d = pca.fit_transform(data)\n",
+        "    centroids_2d = pca.transform(centroids.T)\n",
+        "    clear_output(wait=True)\n",
+        "    plt.title(f'Iteration {iteration}')\n",
+        "    plt.scatter(x=data_2d[:,0], y=data_2d[:,1], c=labels)\n",
+        "    plt.scatter(x=centroids_2d[:,0], y=centroids_2d[:,1])\n",
+        "    plt.show()\n"
+      ],
+      "metadata": {
+        "id": "YO0v3pkNhfRm"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "max_iterations = 100\n",
+        "centroid_count = 3\n",
+        "\n",
+        "centroids = random_centroids(data, centroid_count)\n",
+        "old_centroids = pd.DataFrame()\n",
+        "iteration = 1\n",
+        "\n",
+        "while iteration < max_iterations and not centroids.equals(old_centroids):\n",
+        "    old_centroids = centroids\n",
+        "\n",
+        "    labels = get_labels(data, centroids)\n",
+        "    centroids = new_centroids(data, labels, centroid_count)\n",
+        "    plot_clusters(data, labels, centroids, iteration)\n",
+        "    iteration += 1\n"
+      ],
+      "metadata": {
+        "id": "bCiVhBk8uh3W"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## **Final Cluster Centroids**"
+      ],
+      "metadata": {
+        "id": "fM3ktAqn_u65"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "centroids"
+      ],
+      "metadata": {
+        "id": "GNc1EKOPKoy-"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **David Bouldin Index**"
+      ],
+      "metadata": {
+        "id": "2pB8rv2kIvKX"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "from sklearn.metrics import davies_bouldin_score\n",
+        "\n",
+        "db_index = davies_bouldin_score(data, labels)\n",
+        "print(f\"Davies-Bouldin Index: {db_index}\")"
+      ],
+      "metadata": {
+        "id": "U5qp4bxEHRaW"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Final Cluster Assignments**"
+      ],
+      "metadata": {
+        "id": "c3tP5adyfkcX"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## **Cluster 0**\n",
+        "**Active Agencies with Room for Underwriting Improvement and Moderate Profitability**"
+      ],
+      "metadata": {
+        "id": "lgkpc4RnE9d_"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "\n",
+        "1. Low flat and under 120 cancellations (7% - 23%)\n",
+        "2. Low Underwriting cancellations (0 - 14%)\n",
+        "3. Low frequency of policies bound,\n",
+        "4. Moderate increase in Coverage A ($),\n",
+        "5. Short policy terms,\n",
+        "6. Moderate profitability,\n",
+        "7. Low recent production."
+      ],
+      "metadata": {
+        "id": "V9hnRVO6G55p"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pd.set_option('display.max.rows',None)\n",
+        "agencies[labels ==0].describe()"
+      ],
+      "metadata": {
+        "id": "ZA2mGQbS3J4y"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Cluster 1**\n",
+        "**Inactive Producers with Improved Underwriting Metrics and Moderate Profitability**"
+      ],
+      "metadata": {
+        "id": "ER9Mpjm7FKXO"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "1. Moderate flat and under-120-day cancellations (7.5% to 30%)\n",
+        "2.  Low underwriting cancellations (0% to 16%)\n",
+        "3.  Low frequency of policies with Coverage A changes (0% to 25%)\n",
+        "4.  Moderate increases in Coverage A ($0 to $143k)\n",
+        "5. Moderate Policy Terms\n",
+        "6. Moderate profitability ($1202 to $1821)\n",
+        "7. High recent production\n"
+      ],
+      "metadata": {
+        "id": "klQIpf9JQPb3"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pd.set_option('display.max.rows',None)\n",
+        "agencies[labels ==1].describe()"
+      ],
+      "metadata": {
+        "id": "EvHQFVsUFMyc"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Cluster 2**\n",
+        "### **Moderately Profitable Agencies with Stable Underwriting and Slightly Above-Average Production**"
+      ],
+      "metadata": {
+        "id": "f-udDSBJFX8W"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "1.   Moderate flat and under-120-day cancellations\n",
+        "2.   Low underwriting cancellations\n",
+        "3.   Low frequency of policies transitioning from bound to Coverage A\n",
+        "4.   Moderate Coverage A increases ($117k to $182k)\n",
+        "5.   Above Average Policy Terms\n",
+        "5.  Slightly moderate profitability\n",
+        "6.  Low to Average recent production"
+      ],
+      "metadata": {
+        "id": "_0s2EIcIYj06"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pd.set_option('display.max.rows',None)\n",
+        "agencies[labels ==2].describe()"
+      ],
+      "metadata": {
+        "id": "63zeioXwFbgv"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "tCUqFJjnPEIq"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Cluster 3**"
+      ],
+      "metadata": {
+        "id": "4xL0zLKWFgzz"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "1. Agencies with High flat and under 120 cancellations (58.8% - 100%)\n",
+        "2. High Underwriting cancellations\n",
+        "3. Moderate Frequency of Bound to Final policies change\n",
+        "4. low to moderate Average Increase in CoverageA\n",
+        "5. Low policy Terms\n",
+        "6. Moderate profitability\n",
+        "7. Moderate recent production"
+      ],
+      "metadata": {
+        "id": "MiaXYfuZo7jb"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "agencies[labels ==3].describe()"
+      ],
+      "metadata": {
+        "id": "9T1fgcdfFjGI"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "agencies['Cluster'] = labels\n",
+        "agencies['ALC'] = features1['ALC']\n",
+        "output_file = 'Clustered_Data_Corrected.xlsx'\n",
+        "agencies.to_excel(output_file, index=False)\n",
+        "\n",
+        "print(f\"Data exported successfully to {output_file}\")\n"
+      ],
+      "metadata": {
+        "id": "WCLeM4zL-woa"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **SCIKIT IMPORTED MODEL**"
+      ],
+      "metadata": {
+        "id": "FpSTC66tSO5w"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.cluster import KMeans"
+      ],
+      "metadata": {
+        "id": "27SYM7e8REFo"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "kmeans = KMeans(3)\n",
+        "kmeans.fit(data)"
+      ],
+      "metadata": {
+        "id": "gDfrUeOcXxZR"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pd.DataFrame(kmeans.cluster_centers_, columns=data.columns).T"
+      ],
+      "metadata": {
+        "id": "tOQ1K9IVS_2V"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.decomposition import PCA\n",
+        "import matplotlib.pyplot as plt\n",
+        "import pandas as pd\n",
+        "\n",
+        "# Perform PCA to reduce dimensions to 2D\n",
+        "pca = PCA(n_components=2)\n",
+        "data_pca = pca.fit_transform(data)\n",
+        "\n",
+        "# Transform centroids into PCA space (Fix for the warning)\n",
+        "centroids_pca = pca.transform(pd.DataFrame(kmeans.cluster_centers_, columns=data.columns))\n",
+        "\n",
+        "# Create a DataFrame for PCA results\n",
+        "pca_df = pd.DataFrame(data_pca, columns=['PC1', 'PC2'])\n",
+        "pca_df['Cluster'] = kmeans.labels_\n",
+        "\n",
+        "# Define custom colors (avoiding red)\n",
+        "colors = ['#004438', '#80BC00', '#3E4042', '#4197CB']\n",
+        "\n",
+        "# Plot the PCA results with centroids\n",
+        "plt.figure(figsize=(8, 6))\n",
+        "for cluster in sorted(pca_df['Cluster'].unique()):\n",
+        "    cluster_data = pca_df[pca_df['Cluster'] == cluster]\n",
+        "    plt.scatter(cluster_data['PC1'], cluster_data['PC2'], label=f'Cluster {cluster}', color=colors[cluster])\n",
+        "\n",
+        "# Plot centroids as stars\n",
+        "plt.scatter(centroids_pca[:, 0], centroids_pca[:, 1], s=200, c='#E36A00', marker='*', label='Centroids')\n",
+        "\n",
+        "plt.title('K-Means Clusters Visualized in PCA')\n",
+        "plt.xlabel('Principal Component 1')\n",
+        "plt.ylabel('Principal Component 2')\n",
+        "plt.legend()\n",
+        "plt.show()\n"
+      ],
+      "metadata": {
+        "id": "dahNZjwsv9U_"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "agencies['Cluster'] = kmeans.labels_\n",
+        "agencies.to_excel('agencies_with_Finalclusters.xlsx', index=False)"
+      ],
+      "metadata": {
+        "id": "xIzkYT24uHtX"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Elbow Criterion Method**"
+      ],
+      "metadata": {
+        "id": "grJwFY1mUj5q"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "inertia = []\n",
+        "K = range(2, 11)  # Testing K from 2 to 10\n",
+        "\n",
+        "for k in K:\n",
+        "    kmeans = KMeans(n_clusters=k, random_state=42)\n",
+        "    kmeans.fit(data)\n",
+        "    inertia.append(kmeans.inertia_)\n",
+        "\n",
+        "plt.figure(figsize=(10, 5))\n",
+        "plt.plot(K, inertia, 'bo-')\n",
+        "plt.xlabel('Number of Clusters (K)')\n",
+        "plt.ylabel('Inertia')\n",
+        "plt.title('Elbow Method to Determine Optimal K')\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "KSelXbohUpxO"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "agencies[agencies['Cluster'] == 0].describe()"
+      ],
+      "metadata": {
+        "id": "DDn4KGUAvUwE"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "agencies[agencies['Cluster'] == 1].describe()"
+      ],
+      "metadata": {
+        "id": "7IZ3FFeWvw56"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "agencies[agencies['Cluster'] == 2].describe()"
+      ],
+      "metadata": {
+        "id": "ezi-privv0Nz"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "agencies[agencies['Cluster'] == 3].describe()"
+      ],
+      "metadata": {
+        "id": "LosaQOIev2m0"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# prompt: write script to visualze data in PCA from kmeans model of scikit\n",
+        "\n",
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import seaborn as sns\n",
+        "import matplotlib.pyplot as plt\n",
+        "from sklearn.decomposition import PCA\n",
+        "from sklearn.cluster import KMeans\n",
+        "\n",
+        "# Get cluster labels\n",
+        "labels_sklearn = kmeans.labels_\n",
+        "\n",
+        "# PCA for visualization\n",
+        "pca = PCA(n_components=2)\n",
+        "data_2d = pca.fit_transform(data)\n",
+        "centroids_2d = pca.transform(kmeans.cluster_centers_)\n",
+        "\n",
+        "# Plot the clusters with scikit-learn results\n",
+        "plt.figure(figsize=(8, 6))\n",
+        "plt.scatter(data_2d[:, 0], data_2d[:, 1], c=labels_sklearn, cmap='viridis', label='Data Points')\n",
+        "plt.scatter(centroids_2d[:, 0], centroids_2d[:, 1], s=200, c='red', marker='*', label='Centroids')\n",
+        "plt.title('KMeans Clustering with PCA Visualization (scikit-learn)')\n",
+        "plt.xlabel('Principal Component 1')\n",
+        "plt.ylabel('Principal Component 2')\n",
+        "plt.legend()\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "XnlFSNBrTlFu"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **Davies Bouldin Index**"
+      ],
+      "metadata": {
+        "id": "0PD1GkM28Bx-"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "from sklearn.metrics import davies_bouldin_score\n",
+        "\n",
+        "db_index_sklearn = davies_bouldin_score(data, labels_sklearn)\n",
+        "print(f\"Davies-Bouldin Index (scikit-learn): {db_index_sklearn}\")"
+      ],
+      "metadata": {
+        "id": "2PqIkc7G8Izw"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
